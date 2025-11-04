@@ -5,8 +5,11 @@ import { z } from "zod";
 
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+  telegramId: text("telegram_id").unique(),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  username: text("username"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 export const cartItems = pgTable("cart_items", {
@@ -29,9 +32,9 @@ export const conversationHistory = pgTable("conversation_history", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
 });
 
 export const insertCartItemSchema = createInsertSchema(cartItems).omit({
