@@ -7,39 +7,50 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ShoppingCart, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-//todo: remove mock functionality
-const MOCK_CART_ITEMS = [
-  {
-    id: "1",
-    productId: 1,
-    productName: "Samsung Galaxy A54 5G 8/256GB",
-    productPrice: "3,299,000 UZS",
-    quantity: 2,
-  },
-  {
-    id: "2",
-    productId: 2,
-    productName: "Apple AirPods Pro 2nd Generation",
-    productPrice: "2,499,000 UZS",
-    quantity: 1,
-  },
-];
+import { useCart } from "@/hooks/useCart";
+import { useTelegram } from "@/lib/telegram";
+import { api } from "@/lib/api";
+import { useMutation } from "@tanstack/react-query";
 
 export default function Cart() {
-  const [cartItems, setCartItems] = useState(MOCK_CART_ITEMS); //todo: remove mock functionality
+  const { cartItems, updateQuantity, removeItem, isLoading } = useCart();
   const [showCheckout, setShowCheckout] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const { user, tg } = useTelegram();
+
+  const createOrderMutation = useMutation({
+    mutationFn: api.createOrder,
+    onSuccess: (data) => {
+      toast({
+        title: "Buyurtma qabul qilindi!",
+        description: `Buyurtma #${data.orderNumber}. Tez orada siz bilan bog'lanamiz`,
+      });
+      setShowCheckout(false);
+
+      // Send data to Telegram bot
+      if (tg) {
+        tg.sendData(JSON.stringify({
+          type: 'order_created',
+          orderId: data.orderId,
+          orderNumber: data.orderNumber,
+        }));
+      }
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Xatolik",
+        description: error.message || "Buyurtmani yaratishda xatolik yuz berdi",
+        variant: "destructive",
+      });
+    },
+  });
 
   const handleUpdateQuantity = (id: string, newQuantity: number) => {
-    setCartItems(items =>
-      items.map(item => item.id === id ? { ...item, quantity: newQuantity } : item)
-    );
+    updateQuantity({ itemId: id, quantity: newQuantity });
   };
 
   const handleRemoveItem = (id: string) => {
-    setCartItems(items => items.filter(item => item.id !== id));
+    removeItem(id);
     toast({
       title: "Mahsulot o'chirildi",
       description: "Mahsulot savatdan olib tashlandi",
@@ -47,18 +58,18 @@ export default function Cart() {
   };
 
   const handleCheckout = async (formData: any) => {
-    console.log("Submitting order:", formData, cartItems);
-    setIsSubmitting(true);
-    //todo: remove mock functionality - implement actual order submission
-    setTimeout(() => {
-      setIsSubmitting(false);
-      toast({
-        title: "Buyurtma qabul qilindi!",
-        description: "Tez orada siz bilan bog'lanamiz",
-      });
-      setShowCheckout(false);
-      setCartItems([]);
-    }, 2000);
+    createOrderMutation.mutate({
+      userId: user?.id?.toString(),
+      customerName: formData.name,
+      customerPhone: formData.phone,
+      customerAddress: formData.address,
+      cartItems: cartItems.map(item => ({
+        productId: item.productId,
+        productName: item.productName,
+        productPrice: item.productPrice,
+        quantity: item.quantity,
+      })),
+    });
   };
 
   if (cartItems.length === 0) {
@@ -111,8 +122,9 @@ export default function Cart() {
           </Card>
 
           <CheckoutForm
+            defaultName={user?.first_name || ''}
             onSubmit={handleCheckout}
-            isLoading={isSubmitting}
+            isLoading={createOrderMutation.isPending}
           />
         </div>
       </div>

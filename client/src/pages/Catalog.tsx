@@ -1,68 +1,43 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import ProductCard from "@/components/ProductCard";
 import ProductDetailModal from "@/components/ProductDetailModal";
 import EmptyState from "@/components/EmptyState";
 import { ProductGridSkeleton } from "@/components/LoadingSkeleton";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Search, Package } from "lucide-react";
-
-//todo: remove mock functionality
-const MOCK_PRODUCTS = [
-  {
-    id: 1,
-    name: "Samsung Galaxy A54 5G",
-    price: "3,299,000 UZS",
-    regularPrice: "3,699,000 UZS",
-    description: "<p>Samsung Galaxy A54 5G - eng so'nggi texnologiyalar bilan jihozlangan smartfon.</p>",
-    shortDescription: "5G ulanish, 50MP kamera",
-    stockStatus: 'instock' as const,
-    stockQuantity: 15,
-  },
-  {
-    id: 2,
-    name: "Apple iPhone 15 Pro Max 256GB",
-    price: "15,999,000 UZS",
-    regularPrice: "15,999,000 UZS",
-    description: "<p>iPhone 15 Pro Max - Apple'ning eng kuchli smartfoni.</p>",
-    shortDescription: "A17 Pro chip, Titanium korpus",
-    stockStatus: 'instock' as const,
-    stockQuantity: 8,
-  },
-  {
-    id: 3,
-    name: "Xiaomi Redmi Note 13 Pro",
-    price: "2,899,000 UZS",
-    regularPrice: "2,899,000 UZS",
-    description: "<p>Redmi Note 13 Pro - narx va sifat nisbati ajoyib smartfon.</p>",
-    shortDescription: "200MP kamera, 67W tez quvvatlash",
-    stockStatus: 'instock' as const,
-    stockQuantity: 25,
-  },
-  {
-    id: 4,
-    name: "OnePlus 12 16/512GB",
-    price: "8,499,000 UZS",
-    regularPrice: "8,499,000 UZS",
-    description: "<p>OnePlus 12 - flagman darajasidagi smartfon.</p>",
-    shortDescription: "Snapdragon 8 Gen 3, 100W quvvatlash",
-    stockStatus: 'outofstock' as const,
-    stockQuantity: 0,
-  },
-];
+import { api } from "@/lib/api";
+import { useCart } from "@/hooks/useCart";
+import { useToast } from "@/hooks/use-toast";
+import { WooCommerceProduct } from "@shared/schema";
 
 export default function Catalog() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedProduct, setSelectedProduct] = useState<typeof MOCK_PRODUCTS[0] | null>(null);
-  const [isLoading] = useState(false); //todo: remove mock functionality
+  const [selectedProduct, setSelectedProduct] = useState<WooCommerceProduct | null>(null);
+  const { addToCart } = useCart();
+  const { toast } = useToast();
 
-  const filteredProducts = MOCK_PRODUCTS.filter(product =>
-    product.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const { data: products = [], isLoading } = useQuery({
+    queryKey: ['/api/products', searchQuery],
+    queryFn: () => api.getProducts({ search: searchQuery || undefined, per_page: 50 }),
+  });
 
-  const handleAddToCart = (productId: number, quantity: number) => {
-    console.log(`Adding product ${productId} to cart, quantity: ${quantity}`);
-    //todo: remove mock functionality - implement actual cart logic
+  const handleAddToCart = async (productId: number, quantity: number) => {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+
+    addToCart({
+      productId: product.id,
+      productName: product.name,
+      productPrice: product.price,
+      productImage: product.images?.[0]?.src,
+      quantity,
+    });
+
+    toast({
+      title: "Savatga qo'shildi",
+      description: `${product.name} savatga qo'shildi`,
+    });
   };
 
   if (isLoading) {
@@ -91,7 +66,7 @@ export default function Catalog() {
       </div>
 
       <div className="p-4">
-        {filteredProducts.length === 0 ? (
+        {products.length === 0 ? (
           <EmptyState
             icon={Package}
             title="Mahsulot topilmadi"
@@ -101,16 +76,17 @@ export default function Catalog() {
           />
         ) : (
           <div className="grid grid-cols-2 gap-3">
-            {filteredProducts.map(product => (
+            {products.map(product => (
               <ProductCard
                 key={product.id}
                 id={product.id}
                 name={product.name}
-                price={product.price}
-                stockStatus={product.stockStatus}
+                price={`${product.price} UZS`}
+                image={product.images?.[0]?.src}
+                stockStatus={product.stock_status}
                 onAddToCart={handleAddToCart}
                 onViewDetails={(id) => {
-                  const product = MOCK_PRODUCTS.find(p => p.id === id);
+                  const product = products.find(p => p.id === id);
                   if (product) setSelectedProduct(product);
                 }}
               />
@@ -121,7 +97,15 @@ export default function Catalog() {
 
       {selectedProduct && (
         <ProductDetailModal
-          {...selectedProduct}
+          id={selectedProduct.id}
+          name={selectedProduct.name}
+          price={`${selectedProduct.price} UZS`}
+          regularPrice={selectedProduct.regular_price ? `${selectedProduct.regular_price} UZS` : undefined}
+          description={selectedProduct.description}
+          shortDescription={selectedProduct.short_description}
+          images={selectedProduct.images?.map(img => img.src)}
+          stockStatus={selectedProduct.stock_status}
+          stockQuantity={selectedProduct.stock_quantity}
           onClose={() => setSelectedProduct(null)}
           onAddToCart={handleAddToCart}
         />

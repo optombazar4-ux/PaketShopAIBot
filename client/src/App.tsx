@@ -8,16 +8,13 @@ import Catalog from "@/pages/Catalog";
 import Cart from "@/pages/Cart";
 import Profile from "@/pages/Profile";
 import { initTelegramApp } from "@/lib/telegram";
+import { useCart } from "@/hooks/useCart";
 
 type TabType = 'catalog' | 'cart' | 'profile';
 
-function App() {
+function AppContent() {
   const [activeTab, setActiveTab] = useState<TabType>('catalog');
-  const [cartItemCount] = useState(2); //todo: remove mock functionality - get from actual cart state
-
-  useEffect(() => {
-    initTelegramApp();
-  }, []);
+  const { cartItemCount } = useCart();
 
   const renderContent = () => {
     switch (activeTab) {
@@ -33,17 +30,27 @@ function App() {
   };
 
   return (
+    <div className="min-h-screen bg-background">
+      {renderContent()}
+      <BottomNav 
+        activeTab={activeTab} 
+        cartItemCount={cartItemCount}
+        onTabChange={setActiveTab}
+      />
+      <Toaster />
+    </div>
+  );
+}
+
+function App() {
+  useEffect(() => {
+    initTelegramApp();
+  }, []);
+
+  return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <div className="min-h-screen bg-background">
-          {renderContent()}
-          <BottomNav 
-            activeTab={activeTab} 
-            cartItemCount={cartItemCount}
-            onTabChange={setActiveTab}
-          />
-        </div>
-        <Toaster />
+        <AppContent />
       </TooltipProvider>
     </QueryClientProvider>
   );
