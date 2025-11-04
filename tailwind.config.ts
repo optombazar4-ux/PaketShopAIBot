@@ -6,7 +6,7 @@ export default {
   theme: {
     extend: {
       borderRadius: {
-        lg: ".5625rem", /* 9px */
+        lg: "0.5rem", /* 8px - Telegram native */
         md: ".375rem", /* 6px */
         sm: ".1875rem", /* 3px */
       },
