@@ -37,7 +37,7 @@ export class GeminiService {
       const fullPrompt = `${systemPrompt}\n\nMijoz so'rovi: "${userQuery}"\n\nJavob:`;
 
       const result = await genAI.models.generateContent({
-        model: 'models/gemini-1.5-flash',
+        model: 'models/gemini-1.5-pro-latest',
         contents: fullPrompt,
       });
 
