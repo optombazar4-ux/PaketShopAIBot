@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 import { WooCommerceProduct } from './woocommerce';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
@@ -7,7 +7,10 @@ if (!GEMINI_API_KEY) {
   console.warn('GEMINI_API_KEY not set. AI recommendations will not work.');
 }
 
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+let genAI: GoogleGenAI | null = null;
+if (GEMINI_API_KEY) {
+  genAI = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+}
 
 export interface AIRecommendation {
   productIds: number[];
@@ -16,13 +19,12 @@ export interface AIRecommendation {
 }
 
 export class GeminiService {
-  private model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
   async getRecommendations(
     userQuery: string,
     products: WooCommerceProduct[]
   ): Promise<AIRecommendation> {
-    if (!GEMINI_API_KEY) {
+    if (!GEMINI_API_KEY || !genAI) {
       return {
         productIds: [],
         message: 'AI xizmati hozirda ishlamayapti. Iltimos, katalogdan qo\'lda tanlang.',
@@ -34,9 +36,12 @@ export class GeminiService {
       const systemPrompt = this.buildSystemPrompt(products);
       const fullPrompt = `${systemPrompt}\n\nMijoz so'rovi: "${userQuery}"\n\nJavob:`;
 
-      const result = await this.model.generateContent(fullPrompt);
-      const response = result.response;
-      const text = response.text();
+      const result = await genAI.models.generateContent({
+        model: 'gemini-1.5-flash',
+        contents: fullPrompt,
+      });
+
+      const text = result.text || '';
 
       console.log('Gemini AI Response:', text);
 
