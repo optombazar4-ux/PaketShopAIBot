@@ -1,0 +1,174 @@
+TOPSHIRIQ: "PaketShop AI Sotuvchi Bot" (MVP)
+CONTEXT
+Biz paketshop.uz (WooCommerce) uchun Telegram bot va Web App (TWA) orqali ishlaydigan "aqlli sotuvchi" yaratmoqdamiz. Yadro funksiya – Gemini AI yordamida mijozning tabiiy tildagi so'rovini (masalan, "Yaxshi noutbuk kerak") tushunish va WooCommerce katalogidan mos mahsulotlarni tavsiya qilish. To'lov – "Yetkazib berganda to'lash".
+
+YOUR ROLE
+Siz Senior Full-Stack Developer sifatida quyidagi texnik topshiriqni bajarasiz. Sizdan bot logikasi, orkestrator (backend) va TWA interfeysini yaratish kutiladi.
+
+TECH STACK (Tavsiya etiladi)
+Backend (Orkestrator): Node.js (Express/Fastify).
+
+Nima uchun: Tezkor API yaratish, Telegram, WooCommerce va Gemini API'lari o'rtasidagi so'rovlarni boshqarish (orkestratsiya qilish) uchun juda qulay.
+
+Telegram Web App (TWA) Frontend: React.js (Vite orqali).
+
+Nima uchun: Telegram ichida tez ishlaydigan, interaktiv savatcha va buyurtma berish formasini yaratish uchun standart.
+
+Database (Bot uchun): PostgreSQL.
+
+Nima uchun: Foydalanuvchi sessiyalari, suhbatlar tarixi va TWA bilan bog'lanish uchun savatcha ma'lumotlarini saqlashga.
+
+Integratsiyalar: node-telegram-bot-api, axios (API so'rovlari uchun), @google/generative-ai.
+
+CORE FEATURES (Priority order - MVP)
+1. Backend: WooCommerce API Integratsiyasi (MUST HAVE)
+What: WooCommerce REST API bilan bog'lanadigan "Servis" yarating.
+
+Why: Mahsulotlarni olish va buyurtmalarni yaratish uchun asosiy funksiya.
+
+How:
+
+GET /products funksiyasini yarating (qidiruv, kategoriya bo'yicha filtrlash imkoniyati bilan).
+
+GET /products/:id funksiyasini yarating (aniq mahsulot uchun).
+
+POST /orders funksiyasini yarating. Bu funksiya TWA'dan kelgan ma'lumotlar (mijoz info, mahsulotlar ro'yxati) asosida WooCommerce'da yangi buyurtma yaratishi kerak.
+
+Acceptance:
+
+✅ Postman orqali barcha mahsulotlar ro'yxatini olish mumkin.
+
+✅ Postman orqali yangi buyurtma yaratilganda, u paketshop.uz admin panelida "On-Hold" statusi bilan paydo bo'ladi.
+
+2. Backend: Gemini AI Integratsiyasi (MUST HAVE)
+What: Foydalanuvchi matnini va WooCommerce mahsulotlari ro'yxatini Gemini AI'ga yuborib, tavsiyalar oladigan modul yarating.
+
+Why: Bu loyihaning asosiy "aqlli" qismi.
+
+How:
+
+Maxsus "System Prompt" tayyorlang (PRD'ga qarang: "Sen PaketShop sotuvchi-maslahatchisisan. FAQAT men bergan JSON ro'yxatidan foydalan...").
+
+Funksiya: getAIRecommendation(userQuery, productsJSON)
+
+Bu funksiya Gemini'dan faqat tavsiya etilgan mahsulotlarning ID larini yoki aniq JSON obyektlarini qaytarishi kerak (hallucination oldini olish uchun).
+
+Acceptance:
+
+✅ "Menga 1M gacha telefon" so'roviga faqat shu narxdagi mahsulotlar ID'lari qaytariladi.
+
+✅ "Menga olma kerak" (agar katalogda bo'lmasa) so'roviga "Bunday mahsulot yo'q" yoki shunga o'xshash javob qaytariladi.
+
+3. Telegram Bot & Backend Orkestratori (MUST HAVE)
+What: Asosiy bot logikasini yarating.
+
+Why: Foydalanuvchi so'rovlarini qabul qilish va ularni kerakli servislarga (AI yoki TWA) yo'naltirish.
+
+How:
+
+/start buyrug'i: Salomlashish va "Katalog (TWA)" va "AI Maslahatchi" tugmalarini ko'rsatish.
+
+AI Muloqoti: Agar foydalanuvchi matn yozsa (buyruq bo'lmasa), bu so'rovni qabul qiling.
+
+Orkestrator avval WooCommerce'dan mahsulotlarni oladi (Feature 1).
+
+Keyin so'rov va mahsulotlarni Gemini AI'ga yuboradi (Feature 2).
+
+AI javobini formatlab (masalan, "Sizga bular mos keladi: [Mahsulot 1], [Mahsulot 2]"), "Batafsil ko'rish (TWA)" tugmalari bilan foydalanuvchiga yuboradi.
+
+TWA ochish: "Katalog" yoki "Savatcha" tugmasi bosilganda, web_app opsiyasi bilan TWA'ni oching.
+
+Acceptance:
+
+✅ Bot matnli so'rovlarga AI-generatsiya qilingan tavsiyalar bilan javob beradi.
+
+✅ "Katalog" tugmasi React ilovasini bot ichida ochadi.
+
+4. TWA (React): Savatcha va Buyurtma Formasi (MUST HAVE)
+What: Telegram ichida ochiladigan React ilovasini yarating.
+
+Why: Mijozga savatchani ko'rish va buyurtmani rasmiylashtirish uchun vizual interfeys kerak.
+
+How:
+
+Savatcha holati (State): Bot (Backend DB) va TWA o'rtasida savatcha sinxronlashishi kerak (masalan, localStorage yoki useParams orqali user ID bilan backend'dan olish).
+
+Savatcha Sahifasi: Mahsulotlar ro'yxati, miqdorni o'zgartirish, o'chirish.
+
+Checkout Formasi:
+
+Ism (Telegramdan olishga harakat qilish).
+
+Telefon raqami (Telegramdan so'rash/olish).
+
+Manzil (Matn kiritish maydoni).
+
+Buyurtma berish: "Tasdiqlash" tugmasi bosilganda, TWA o'zining backend'iga (Orkestrator) savatcha va forma ma'lumotlarini POST qiladi. Backend esa bu ma'lumotlarni WooCommerce'ga yuboradi (Feature 1.How.3).
+
+Acceptance:
+
+✅ TWA ichida savatchadagi mahsulotlar ko'rinadi.
+
+✅ TWA'da forma to'ldirilib "Tasdiqlash" bosilsa, 5-10 soniyadan so'ng botdan "Buyurtmangiz qabul qilindi!" degan xabar keladi.
+
+IMPLEMENTATION GUIDELINES
+Code Quality Standards:
+Barcha API kalitlari (Telegram, WC, Gemini) .env faylida saqlanishi shart. Kod ichida qoldirmang.
+
+Backend'da aniq papka strukturasi (masalan, /routes, /services, /controllers).
+
+Har bir API so'rovida try...catch bloklarini va xatoliklarni log qilishni unutmang.
+
+WooCommerce API'ga so'rovlarni optimallashtiring (faqat kerakli maydonlarni _fields parametri orqali so'rang).
+
+Responsive Design (TWA):
+TWA faqat mobil qurilmalar uchun mo'ljallangan. Desktop versiya shart emas.
+
+Telegramning ranglar palitrasiga mos dizayn qiling (var(--tg-theme-bg-color)).
+
+SAMPLE CODE STRUCTURE (Node.js Backend)
+/paketshop-bot-backend
+|-- /src
+|   |-- /api
+|   |   |-- routes.js         # Asosiy API endpoint'lar (TWA uchun)
+|   |-- /bot
+|   |   |-- bot.js            # Telegram bot logikasi (onMessage, onCallbackQuery)
+|   |   |-- commands.js
+|   |-- /services
+|   |   |-- woocommerce.js    # WC API bilan ishlash funksiyalari
+|   |   |-- gemini.js         # Gemini API bilan ishlash funksiyalari
+|   |   |-- database.js       # PostgreSQL bilan ishlash (savatcha, user)
+|   |-- /utils
+|   |   |-- promptBuilder.js  # AI uchun prompt'larni yig'ish
+|   |-- config.js             # .env faylni o'qish
+|   |-- server.js             # Express/Fastify server
+|-- .env
+|-- package.json
+EDGE CASES TO HANDLE (PRD'dan)
+WooCommerce API o'chib qoldi: Bot: "Kechirasiz, hozirda katalog bilan texnik nosozlik. Tez orada tuzatamiz." xabarini yuborishi kerak.
+
+Mahsulot qoldig'i tugadi: Buyurtma berish (Checkout) paytida backend har bir mahsulot qoldig'ini qayta tekshirishi (re-validate) kerak. Agar tugagan bo'lsa, TWA'ga xatolik qaytarib, mijozga ko'rsatish kerak.
+
+Gemini javob bermadi (timeout/error): Mijozga "AI hozircha javob bera olmadi. Iltimos, standart katalogdan foydalaning." deb javob qaytaring.
+
+TESTING CHECKLIST
+[ ] /start bosilganda TWA tugmasi chiqadimi?
+
+[ ] Botga yozilgan oddiy matnga AI javob qaytaradimi?
+
+[ ] AI tavsiyalari katalogdagi haqiqiy mahsulotlarmi?
+
+[ ] TWA ichida savatcha to'g'ri ishlaydimi?
+
+[ ] TWA orqali buyurtma berilsa, u WooCommerce admin paneliga tushadimi?
+
+[ ] WooCommerce API o'chganda bot xatolik xabarini ko'rsatadimi?
+
+DELIVERABLES
+Backend (Node.js) kodi uchun to'liq Git repozitoriy.
+
+TWA (React) kodi uchun to'liq Git repozitoriy.
+
+.env.example fayli (qaysi kalitlar kerakligi ko'rsatilgan).
+
+O'rnatish va ishga tushirish bo'yicha qisqacha README.md qo'llanmasi.
