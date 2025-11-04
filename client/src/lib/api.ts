@@ -1,12 +1,13 @@
-import { WooCommerceProduct, CartItem } from "@shared/schema";
+import { WooCommerceProduct, WooCommerceCategory, CartItem } from "@shared/schema";
 
 const API_BASE = '';
 
 export const api = {
   // Products
-  async getProducts(params?: { search?: string; page?: number; per_page?: number }): Promise<WooCommerceProduct[]> {
+  async getProducts(params?: { search?: string; category?: number; page?: number; per_page?: number }): Promise<WooCommerceProduct[]> {
     const query = new URLSearchParams();
     if (params?.search) query.set('search', params.search);
+    if (params?.category) query.set('category', params.category.toString());
     if (params?.page) query.set('page', params.page.toString());
     if (params?.per_page) query.set('per_page', params.per_page.toString());
     
@@ -18,6 +19,12 @@ export const api = {
   async getProduct(id: number): Promise<WooCommerceProduct> {
     const response = await fetch(`${API_BASE}/api/products/${id}`);
     if (!response.ok) throw new Error('Failed to fetch product');
+    return response.json();
+  },
+
+  async getCategories(): Promise<WooCommerceCategory[]> {
+    const response = await fetch(`${API_BASE}/api/categories`);
+    if (!response.ok) throw new Error('Failed to fetch categories');
     return response.json();
   },
 

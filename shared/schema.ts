@@ -68,6 +68,16 @@ export interface WooCommerceProduct {
   stock_quantity: number | null;
 }
 
+export interface WooCommerceCategory {
+  id: number;
+  name: string;
+  slug: string;
+  count: number;
+  image?: {
+    src: string;
+  };
+}
+
 export interface AIRecommendation {
   productIds: number[];
   message: string;

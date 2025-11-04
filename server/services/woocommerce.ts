@@ -27,6 +27,16 @@ export interface WooCommerceProduct {
   stock_quantity: number | null;
 }
 
+export interface WooCommerceCategory {
+  id: number;
+  name: string;
+  slug: string;
+  count: number;
+  image?: {
+    src: string;
+  };
+}
+
 export interface CreateOrderData {
   customerName: string;
   customerPhone: string;
@@ -72,6 +82,25 @@ export class WooCommerceService {
     } catch (error: any) {
       console.error(`WooCommerce API Error (getProductById ${id}):`, error.message);
       return null;
+    }
+  }
+
+  async getCategories(): Promise<WooCommerceCategory[]> {
+    try {
+      const response = await wcApi.get('/products/categories', {
+        params: {
+          per_page: 100,
+          hide_empty: true,
+          _fields: 'id,name,slug,count,image',
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('WooCommerce API Error (getCategories):', error.message);
+      if (error.response) {
+        console.error('Response data:', error.response.data);
+      }
+      throw new Error('Kategoriyalarni yuklashda xatolik.');
     }
   }
 

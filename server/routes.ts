@@ -49,6 +49,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get categories from WooCommerce
+  app.get('/api/categories', async (req, res) => {
+    try {
+      const categories = await wooCommerceService.getCategories();
+      res.json(categories);
+    } catch (error: any) {
+      console.error('Error fetching categories:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Get cart items for a user
   app.get('/api/cart/:userId', async (req, res) => {
     try {
